@@ -6,14 +6,6 @@ export interface AuditResult {
     name: string;
     description: string;
     severity: string;
-    recommendation: string;// mantleguard-vercel/src/lib/ai.ts
-export interface AuditResult {
-  riskScore: number;
-  severity: "Critical" | "High" | "Medium" | "Low";
-  vulnerabilities: Array<{
-    name: string;
-    description: string;
-    severity: string;
     recommendation: string;
   }>;
   gasOptimization: string;
@@ -59,60 +51,5 @@ export async function analyzeContract(contractCode: string): Promise<AuditResult
       : "Gas usage looks efficient.",
     summary: `AI scanned ${contractCode.length} characters. ${riskScore > 70 ? "High-risk — fix before deploying!" : "Generally solid contract."}`,
     mantleTips: "Deploying on Mantle L2 reduces gas costs by ~90%.",
-  };
-}
-  }>;
-  gasOptimization: string;
-  summary: string;
-  mantleTips: string;
-}
-
-export async function analyzeContract(contractCode: string): Promise<AuditResult> {
-  // Realistic AI processing delay
-  await new Promise((resolve) => setTimeout(resolve, 2800));
-
-  const lowerCode = contractCode.toLowerCase();
-  const hasReentrancy = lowerCode.includes("call(") || lowerCode.includes(".send") || lowerCode.includes("transfer");
-  const hasOwner = lowerCode.includes("owner") || lowerCode.includes("onlyowner");
-  const isComplex = contractCode.length > 1000;
-
-  const riskScore = hasReentrancy ? 88 : hasOwner ? 62 : isComplex ? 74 : 38;
-
-  return {
-    riskScore,
-    severity: riskScore > 80 ? "Critical" : riskScore > 60 ? "High" : riskScore > 40 ? "Medium" : "Low",
-    vulnerabilities: [
-      ...(hasReentrancy
-        ? [
-            {
-              name: "Reentrancy Attack Risk",
-              description: "External call made before state update.",
-              severity: "Critical",
-              recommendation: "Follow Checks-Effects-Interactions pattern or use ReentrancyGuard from OpenZeppelin.",
-            },
-          ]
-        : []),
-      ...(hasOwner
-        ? [
-            {
-              name: "Weak Access Control",
-              description: "Owner checks may be bypassable.",
-              severity: "High",
-              recommendation: "Use OpenZeppelin Ownable or Role-Based Access Control.",
-            },
-          ]
-        : []),
-      {
-        name: "Unchecked Low-Level Call",
-        description: "Return value of call/send not checked.",
-        severity: "Medium",
-        recommendation: "Always handle return values or wrap in try/catch.",
-      },
-    ],
-    gasOptimization: isComplex
-      ? "Multiple loops and storage writes detected. Consider batching and using calldata."
-      : "Gas usage looks efficient. Minor optimizations possible with immutable variables.",
-    summary: `AI scanned ${contractCode.length} characters. ${riskScore > 70 ? "High-risk contract — fix before deploying on Mantle!" : "Generally solid contract with some improvements recommended."}`,
-    mantleTips: "Deploying on Mantle L2 will reduce gas costs by ~90%. Use Mantle’s fast finality for better user experience in DeFi apps.",
   };
 }
